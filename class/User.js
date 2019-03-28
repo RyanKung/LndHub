@@ -9,7 +9,7 @@ export class User {
    *
    * @param {Redis} redis
    */
-  constructor(redis, bitcoindrpc, lightning) {
+  constructor(redis, bitcoindrpc, lightning, pubkey) {
     this._redis = redis;
     this._bitcoindrpc = bitcoindrpc;
     this._lightning = lightning;
@@ -17,6 +17,7 @@ export class User {
     this._login = false;
     this._password = false;
     this._balance = 0;
+    this._pubkey = false;
   }
 
   getUserId() {
@@ -61,6 +62,9 @@ export class User {
   }
 
   async create() {
+    if (this._pubkey) {
+      return await this._saveUserToDatabase();
+    }
     let buffer = crypto.randomBytes(10);
     let login = buffer.toString('hex');
 
@@ -72,7 +76,7 @@ export class User {
     this._login = login;
     this._password = password;
     this._userid = userid;
-    await this._saveUserToDatabase();
+    return await this._saveUserToDatabase();
   }
 
   async saveMetadata(metadata) {
@@ -360,7 +364,15 @@ export class User {
 
   async _saveUserToDatabase() {
     let key;
-    await this._redis.set((key = 'user_' + this._login + '_' + this._hash(this._password)), this._userid);
+    await this._redis.set((
+      key = 'user'
+	+' _'
+	+ this._login
+	+ '_'
+	+ this._hash(this._password)
+	+ '_'
+        + this._pubkey
+    ), this._userid);
   }
 
   /**

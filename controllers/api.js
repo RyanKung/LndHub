@@ -63,7 +63,11 @@ router.post('/create', postLimiter, async function(req, res) {
   logger.log('/create', [req.id]);
   if (!(req.body.partnerid && req.body.partnerid === 'bluewallet' && req.body.accounttype)) return errorBadArguments(res);
 
-  let u = new User(redis, bitcoinclient, lightning);
+  if (req.body.pubkey) {
+    let u = new User(redis, bitcoinclient, lightning, req.body.pubkey);
+  } else {
+    let u = new User(redis, bitcoinclient, lightning, false);
+  }
   await u.create();
   await u.saveMetadata({ partnerid: req.body.partnerid, accounttype: req.body.accounttype, created_at: new Date().toISOString() });
   res.send({ login: u.getLogin(), password: u.getPassword() });
