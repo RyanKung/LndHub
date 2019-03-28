@@ -3,6 +3,8 @@ import { Lock } from './Lock';
 var crypto = require('crypto');
 var lightningPayReq = require('bolt11');
 import { BigNumber } from 'bignumber.js';
+var EC = require('elliptic').ec;
+var sha256 = require('js-sha256');
 
 export class User {
   /**
@@ -37,17 +39,43 @@ export class User {
     return this._refresh_token;
   }
 
-  async loadByAuthorization(authorization) {
+  verifySig(sig, data, auth) {
+    if (!auth) return false;
+    let pubkey = authorization.replace('Pubkey ', '');
+    let key = ec.keyFromPublic(pubkey, 'hex');
+    let hash = sha256(data);
+    return key.verify(hash, sig)
+  }
+
+  async loadByAuthorization(authorization, pubkey) {
     if (!authorization) return false;
     let access_token = authorization.replace('Bearer ', '');
-    let userid = await this._redis.get('userid_for_' + access_token);
-
+    if (pubkey) {
+    let userid = await this._redis.get('userid_pubkey_' + access_token);
+    } else {
+      let userid = await this._redis.get('userid_for_' + access_token);
+    }
     if (userid) {
       this._userid = userid;
       return true;
     }
-
     return false;
+  }
+
+  async loadByAuthOrSig(req) {
+    if (req.headers.sig) {
+      if (!(
+	verifySig(
+	  req.headers.sig,
+	  req.body.data,
+	  req.headers.authorization
+	))) {
+	return false
+      }
+      return await loadByAuthorization(req.headers.authorization, true);
+    } else {
+      return await loadByAuthorization(req.headers.authorization, true);
+    }
   }
 
   async loadByRefreshToken(refresh_token) {
@@ -364,15 +392,24 @@ export class User {
 
   async _saveUserToDatabase() {
     let key;
-    await this._redis.set((
-      key = 'user'
-	+' _'
-	+ this._login
-	+ '_'
-	+ this._hash(this._password)
-	+ '_'
-        + this._pubkey
-    ), this._userid);
+    if (this._pubkey) {
+      await this._redis.set((
+	key = 'user'
+	  + ' _'
+	  + 'pubkey'
+	  + '_'
+	  + this._pubkey
+      ), this._userid)
+
+    } else {
+      await this._redis.set((
+	key = 'user'
+	  +' _'
+	  + this._login
+	  + '_'
+	  + this._hash(this._password)
+      ), this._userid)
+    };
   }
 
   /**
