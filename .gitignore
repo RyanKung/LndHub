@@ -21,3 +21,8 @@ yarn-error.log*
 # OSX# OSX
 #
 .DS_Store
+
+# py
+
+*.__pycache__.*
+*.pyc
