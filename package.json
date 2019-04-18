@@ -21,7 +21,6 @@
     "babel-register": "^6.26.0",
     "bignumber.js": "^8.0.1",
     "bitcoinjs-lib": "^4.0.2",
-    "bitcoinjs-message": "^2.0.0",
     "bolt11": "https://github.com/bitcoinjs/bolt11",
     "elliptic": "^6.4.1",
     "eslint": "^5.9.0",

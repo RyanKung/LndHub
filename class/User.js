@@ -1,9 +1,8 @@
 import { Lock } from './Lock';
-
+var EC = require('elliptic').ec;
 var crypto = require('crypto');
 var lightningPayReq = require('bolt11');
 import { BigNumber } from 'bignumber.js';
-var bitcoinMessage = require('bitcoinjs-message')
 var sha256 = require('js-sha256');
 
 export class User {
@@ -45,7 +44,7 @@ export class User {
     let pubkey = auth.replace('Pubkey ', '');
     let key = ec.keyFromPublic(pubkey, 'hex');
     let hash = this._hash(data);
-    return await key.verify(hash, this.decodeSig(sig))
+    return await key.verify(hash, this._decodeSig(sig))
   }
 
   async loadByAuthorization(authorization, pubkey) {
@@ -509,16 +508,20 @@ export class User {
       .digest()
       .toString('hex');
   }
-
   _decodeSig(string) {
     let sig_buff = Buffer.from(string, 'utf8');
-    let sig = bitcoinmessage.decodeSignatrue(sig_buff);
+    if (sig_buff.length !== 65) throw new Error('Invalid signature length')
+    var flagByte = sig_buff.readUInt8(0) - 27
+    if (flagByte > 7) throw new Error('Invalid signature parameter')
+
+
+    let sig = bitcoinMessage.decodeSignatrue(sig_buff);
     return {
-      r: sig.recovery,
-      s: sig.signature
+      r: flagByte & 3,
+      s: buffer.slice(1)
     }
   }
-
+}
   /**
    * Shuffles array in place. ES6 version
    * @param {Array} a items An array containing the items.
