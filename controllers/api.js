@@ -61,12 +61,13 @@ const postLimiter = rateLimit({
 
 router.post('/create', postLimiter, async function(req, res) {
   logger.log('/create', [req.id]);
+  let u;
   if (!(req.body.partnerid && req.body.partnerid === 'bluewallet' && req.body.accounttype)) return errorBadArguments(res);
 
   if (req.body.pubkey) {
-    let u = new User(redis, bitcoinclient, lightning, req.body.pubkey);
+    u = await new User(redis, bitcoinclient, lightning, req.body.pubkey);
   } else {
-    let u = new User(redis, bitcoinclient, lightning, false);
+    u = await new User(redis, bitcoinclient, lightning, false);
   }
   await u.create();
   await u.saveMetadata({ partnerid: req.body.partnerid, accounttype: req.body.accounttype, created_at: new Date().toISOString() });

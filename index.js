@@ -3,6 +3,11 @@ process.on('uncaughtException', function(err) {
   console.log('Node NOT Exiting...');
 });
 
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 let express = require('express');
 let morgan = require('morgan');
