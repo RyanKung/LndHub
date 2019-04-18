@@ -19,19 +19,11 @@ class BasicTest(base.BaseTest):
         assert resp.status_code == 200
         assert resp.json()['password']
         assert resp.json()['login']
-        token = "userid_for_%s_%s" % (
-            resp.json()['login'],
-            sha256(resp.json()['password'].encode()).hexdigest()
+        token = requests.post(
+            "%s/%s" % (self.host, "auth"),
+            resp.json()
         )
-
-        resp = requests.post(
-            "%s/%s" % (self.host, "verify_auth"),
-            headers=dict(authorization=token)
-        )
-        assert resp.text == "ok"
-
-
-
+        assert token
 
 
     def test_firefly_create_user(self):
