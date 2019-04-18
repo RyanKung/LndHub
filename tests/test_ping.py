@@ -24,6 +24,14 @@ class BasicTest(base.BaseTest):
             resp.json()
         )
         assert token
+        resp = requests.post(
+            "%s/%s" % (self.host, "verify_auth"),
+            headers=dict(authorization=token)
+        )
+        assert resp.text == "ok"
+
+
+
 
 
     def test_firefly_create_user(self):
