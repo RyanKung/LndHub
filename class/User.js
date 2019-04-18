@@ -521,7 +521,6 @@ export class User {
       s: buffer.slice(1)
     }
   }
-}
   /**
    * Shuffles array in place. ES6 version
    * @param {Array} a items An array containing the items.

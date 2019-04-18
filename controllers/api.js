@@ -82,6 +82,7 @@ router.post('/create', postLimiter, async function(req, res) {
 router.post("/verify_auth", postLimiter, async function(req, res) {
   logger.log('/verify_auth', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
+
   if (!(await u.loadByAuthOrSig(req))) {
     return errorBadAuth(res);
   }
