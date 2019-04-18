@@ -41,8 +41,8 @@ export class User {
 
   verifySig(sig, data, auth) {
     if (!auth) return false;
-    let pubkey = authorization.replace('Pubkey ', '');
-    let key = ec.keyFromPublic(pubkey, 'hex');
+    let pubkey = auth.replace('Pubkey ', '');
+    let key = EC.keyFromPublic(pubkey, 'hex');
     let hash = sha256(data);
     return key.verify(hash, sig)
   }
@@ -66,10 +66,9 @@ export class User {
   async loadByAuthOrSig(req) {
     if (req.headers.sig) {
       if (!(
-	verifySig(
+	this.verifySig(
 	  req.headers.sig,
 	  req.body.data,
-	  req.headers.authorization
 	))) {
 	return false
       }
