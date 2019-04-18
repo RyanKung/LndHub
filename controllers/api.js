@@ -71,7 +71,21 @@ router.post('/create', postLimiter, async function(req, res) {
   }
   await u.create();
   await u.saveMetadata({ partnerid: req.body.partnerid, accounttype: req.body.accounttype, created_at: new Date().toISOString() });
-  res.send({ login: u.getLogin(), password: u.getPassword() });
+
+  if (req.body.pubkey) {
+    res.send({ result: "ok" });
+  } else {
+    res.send({ login: u.getLogin(), password: u.getPassword() });
+  }
+});
+
+router.post("/verify_auth", postLimiter, async function(req, res) {
+  logger.log('/verify_auth', [req.id]);
+  let u = new User(redis, bitcoinclient, lightning);
+  if (!(await u.loadByAuthOrSig(req))) {
+    return errorBadAuth(res);
+  }
+  res.send("ok")
 });
 
 router.post('/auth', postLimiter, async function(req, res) {

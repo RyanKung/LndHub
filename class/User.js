@@ -50,10 +50,11 @@ export class User {
   async loadByAuthorization(authorization, pubkey) {
     if (!authorization) return false;
     let access_token = authorization.replace('Bearer ', '');
+    let userid;
     if (pubkey) {
-    let userid = await this._redis.get('userid_pubkey_' + access_token);
+      userid = await this._redis.get('userid_pubkey_' + access_token);
     } else {
-      let userid = await this._redis.get('userid_for_' + access_token);
+      userid = await this._redis.get('userid_for_' + access_token);
     }
     if (userid) {
       this._userid = userid;
@@ -72,9 +73,9 @@ export class User {
 	))) {
 	return false
       }
-      return await loadByAuthorization(req.headers.authorization, true);
+      return await this.loadByAuthorization(req.headers.authorization, true);
     } else {
-      return await loadByAuthorization(req.headers.authorization, true);
+      return await this.loadByAuthorization(req.headers.authorization, false);
     }
   }
 
