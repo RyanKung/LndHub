@@ -3,6 +3,7 @@ import base
 from hashlib import sha256
 from klefki.bitcoin import gen_key_pair, sign
 from klefki.bitcoin.sign import sign
+import simplejson as json
 
 class BasicTest(base.BaseTest):
     def test_ping(self):
@@ -35,13 +36,14 @@ class BasicTest(base.BaseTest):
         assert resp.status_code == 200
         assert resp.json()['result'] == "ok"
 
-        data = "Hello World"
+        data = dict(data="Hello World")
+        sig = sign(priv, sha256(json.dumps(data, separators=(',', ':')).encode()).hexdigest())
         resp = requests.post(
-            "%s/%s" % (self.host, "verify_auth"),
+            url="%s/%s" % (self.host, "verify_auth"),
             headers=dict(
-                authorization="Pubkey%s" % pub,
-                sig=sign(priv, sha256(data.encode()).hexdigest())
+                authorization="Pubkey %s" % pub,
+                sig=sign(priv, sha256(json.dumps(data, separators=(',', ':')).encode()).hexdigest())
             ),
-            data=data
+            json=data
         )
         assert resp.json()['error'] != True

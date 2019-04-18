@@ -3,7 +3,7 @@ import { Lock } from './Lock';
 var crypto = require('crypto');
 var lightningPayReq = require('bolt11');
 import { BigNumber } from 'bignumber.js';
-var EC = require('elliptic').ec;
+var bitcoinMessage = require('bitcoinjs-message')
 var sha256 = require('js-sha256');
 
 export class User {
@@ -39,12 +39,13 @@ export class User {
     return this._refresh_token;
   }
 
-  verifySig(sig, data, auth) {
-    if (!auth) return false;
+  async verifySig(sig, data, auth) {
+    if (!(sig && auth && data)) return false;
+    var ec = new EC('secp256k1');
     let pubkey = auth.replace('Pubkey ', '');
-    let key = EC.keyFromPublic(pubkey, 'hex');
-    let hash = sha256(data);
-    return key.verify(hash, sig)
+    let key = ec.keyFromPublic(pubkey, 'hex');
+    let hash = this._hash(data);
+    return await key.verify(hash, this.decodeSig(sig))
   }
 
   async loadByAuthorization(authorization, pubkey) {
@@ -66,9 +67,10 @@ export class User {
   async loadByAuthOrSig(req) {
     if (req.headers.sig) {
       if (!(
-	this.verifySig(
+	await this.verifySig(
 	  req.headers.sig,
-	  req.body.data,
+	  JSON.stringify(req.body),
+	  req.headers.authorization
 	))) {
 	return false
       }
@@ -506,6 +508,15 @@ export class User {
       .update(string)
       .digest()
       .toString('hex');
+  }
+
+  _decodeSig(string) {
+    let sig_buff = Buffer.from(string, 'utf8');
+    let sig = bitcoinmessage.decodeSignatrue(sig_buff);
+    return {
+      r: sig.recovery,
+      s: sig.signature
+    }
   }
 
   /**
